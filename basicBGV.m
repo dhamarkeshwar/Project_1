@@ -240,10 +240,16 @@ end function;
 function BGVKeySwitch(g,ell,ksk) // outputs a list of ciphers of q_b*s^2 multiplied by pieces of g
   cs := [];
   max_mod := GetMaxModulus();
+  temp := g mod qb;
   for i := 1 to max_level do
-    temp := g mod qb^i;
+    if i := 1 then
+      temp := temp mod qb^i;
+    else
+      temp := (temp mod qb^i) div qb^(i-1);
+    end if;
     muli := ksk[i];
     Append (~cs,[((muli[1]*temp) mod f) mod qb^i,((muli[2]*temp) mod f) mod qb^i]);
+    temp := g-temp;
   end for;
   temp := cs[1];
   for i := 2 to #cs do
