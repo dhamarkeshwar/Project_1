@@ -242,7 +242,7 @@ function BGVKeySwitch(g,ell,ksk) // outputs a list of ciphers of q_b*s^2 multipl
   max_mod := GetMaxModulus();
   temp := g mod qb;
   for i := 1 to max_level do
-    if i := 1 then
+    if i eq 1 then
       temp := temp mod qb^i;
     else
       temp := (temp mod qb^i) div qb^(i-1);
