@@ -244,7 +244,7 @@ function BGVKeySwitch(g,ell,ksk) // outputs a list of ciphers of q_b*s^2 multipl
   upd_1 := (ksk[1][1]*temp) mod f;
   upd_2 := (ksk[1][2]*temp) mod f;
   for i := 2 to max_level do
-    temp := g-temp;
+    temp := g-temp; // think about this once
     temp := (temp mod qb^i) div qb^(i-1);
     upd_1 := upd_1+(ksk[i][1]*temp) mod f;
     upd_2 := upd_2+(ksk[i][2]*temp) mod f;
@@ -254,10 +254,8 @@ end function;
 
 function BGVMul(c_1,c_2,ksk)
   cs := BGVBasicMul(c_1,c_2); // Gives 3 component cipher
- // print "cs", cs;
   result := <[cs[1][1],cs[1][2]],cs[2]>; // First 2 cipher components
   cs_1 := BGVKeySwitch(cs[1][3],cs[2],ksk); 
-  // temp := &+cs_1; // shortcut to add lists, &+ from chatgpt
   return BGVAdd(result,cs_1);
 end function;
 
