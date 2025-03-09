@@ -248,7 +248,7 @@ function BGVKeySwitch(g,ell,ksk) // outputs a list of ciphers of q_b*s^2 multipl
       temp := (temp mod qb^i) div qb^(i-1);
     end if;
     muli := ksk[i];
-    Append (~cs,[((muli[1]*temp) mod f) mod qb^i,((muli[2]*temp) mod f) mod qb^i]);
+    Append (~cs,[(muli[1]*temp) mod f,(muli[2]*temp) mod f]);
     temp := g-temp;
   end for;
   temp := cs[1];
