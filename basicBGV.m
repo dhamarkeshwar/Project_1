@@ -260,11 +260,11 @@ function BGVMul(c_1,c_2,ksk)
 end function;
 
 // generating ksk and testing mult
-ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
-c3 := BGVMul(c1, c1, ksk);
-m3 := BGVDecrypt(c3, sk);
-print "Test multiplication with key switch", m3 eq ((m1*m1) mod f) mod p;
-print "Noise in mult with key switch", BGVNoiseBound(c3,sk);
+// ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
+// c3 := BGVMul(c1, c1, ksk);
+// m3 := BGVDecrypt(c3, sk);
+// print "Test multiplication with key switch", m3 eq ((m1*m1) mod f) mod p;
+// print "Noise in mult with key switch", BGVNoiseBound(c3,sk);
 
 // ck := c1;
 // mt := m1;
