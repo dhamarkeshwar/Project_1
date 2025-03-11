@@ -259,6 +259,46 @@ function BGVMul(c_1,c_2,ksk)
   return BGVAdd(result,cs_1);
 end function;
 
+// last question in task 1 incomplete
+
+// Task 2
+
+function BGVEncode(m,fs)
+  // encoded_m := 0;
+  // for i :=1 to #fs do
+  //   field := quo<Fpz ! Ideal(fs[i])>;
+  //   temp := f div fs[i];
+  //   inv_temp := ReciprocalPolynomial(temp);
+  //   encoded_m := encoded_m + m[i]*temp*inv_temp;
+  // end for;
+  // return encoded_m;
+  m_polys := [Polynomial([m[i]]) : i in [1..#m]];
+  return CRT(m_polys,fs);
+end function;
+
+function BGVDecode(m,fs)
+  decoded := [];
+  for i := 1 to #fs do
+    Append(~decoded, Modexp(m,1,fs[i]));
+  end for;
+  return decoded;
+end function;
+//test for encode
+
+// A := [Random(Fp) : i in [1..N]];
+// B := [Random(Fp) : i in [1..N]];
+// // print "polynomial factor", fs[1];
+// a := BGVEncode(A, fs);
+// b := BGVEncode(B, fs);
+
+// asumb := BGVDecode(a+b, fs);
+// aprodb := BGVDecode((a*b) mod Fpz ! f, fs);
+
+// print "Test additive homomorphism ", asumb eq [A[i] + B[i] : i in [1..N]];
+// print "Test multiplicative homomorphism ", aprodb eq [A[i]*B[i] : i in [1..N]];
+
+
+
 // generating ksk and testing mult
 // ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
 // c3 := BGVMul(c1, c1, ksk);
