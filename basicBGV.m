@@ -272,7 +272,7 @@ function BGVEncode(m,fs)
   //   encoded_m := encoded_m + m[i]*temp*inv_temp;
   // end for;
   // return encoded_m;
-  m_polys := [Polynomial([m[i]]) : i in [1..#m]];
+  m_polys := [Polynomial([m[i]]) : i in [1..#m]]; // Representing finite field elements as elements of zero degree in a polynomial ring - This line from chatgpt
   return CRT(m_polys,fs);
 end function;
 
