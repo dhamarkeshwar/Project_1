@@ -283,7 +283,7 @@ function BGVDecode(m,fs)
   end for;
   return decoded;
 end function;
-//test for encode
+//test for CRT
 
 // A := [Random(Fp) : i in [1..N]];
 // B := [Random(Fp) : i in [1..N]];
@@ -316,6 +316,8 @@ end function;
 //   print "Test multiplication with key switch ", mk eq mt;
 //   print "Noise in mult with key switch", BGVNoiseBound(ck,sk);
 // end for;
+
+// Task 4
 
 
 

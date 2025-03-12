@@ -1,0 +1,142 @@
+sdheerajkumar@Ss-MacBook-Air Project_1 % magma
+Magma V2.28-6     Tue Mar 11 2025 11:34:33 on Ss-MacBook-Air [Seed = 3982138146]
+Type ? for help.  Type <Ctrl>-D to quit.
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 21.9509925914492456938902568701
+
+In file "basicBGV.m", line 269, column 30:
+>>     field := quo<Fpz ! fcs[1]>;^M
+                                ^
+User error: bad syntax
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.1295968364074587400078144273
+
+In file "basicBGV.m", line 269, column 30:
+>>     field := quo<Fpz ! fcs[i]>;^M
+                                ^
+User error: bad syntax
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.4094831320791966283426125688
+
+In file "basicBGV.m", line 269, column 29:
+>>     field := quo<Fpz ! fs[i]>;^M
+                               ^
+User error: bad syntax
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 21.9157291486195525451471719914
+
+In file "basicBGV.m", line 269, column 29:
+>>     field := quo<Fpz ! fs[i]>;^M
+                               ^
+User error: bad syntax
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.3227068972565156437263357141
+
+BGVEncode(
+    m: [ 15109, 58073, 53882, 42394, 38193, 60077, 31353, 60666, 44...,
+    fs: [ z + 2469, z + 4938, z + 5707, z + 9589, z + 9876, z + 1016...
+)
+In file "basicBGV.m", line 275, column 6:
+>>   CRT(m,fs);^M
+        ^
+Runtime error in 'CRT': Bad argument types
+Argument types given: SeqEnum[FldFinElt], SeqEnum[RngUPolElt[FldFin]]
+
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.2825344747260247883517778364
+
+In file "basicBGV.m", line 269, column 36:
+>>     field := quo<Fpz ! Ideal(fs[i])>;^M
+                                      ^
+User error: bad syntax
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 21.8772863805419809044021774827
+polynomial factor z + 2469
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.3539057309822065070939587035
+
+BGVEncode(
+    m: [ 62814, 60201, 9712, 26164, 20841, 17007, 64608, 20320, 204...,
+    fs: [ z + 2469, z + 4938, z + 5707, z + 9589, z + 9876, z + 1016...
+)
+In file "basicBGV.m", line 275, column 13:
+>>   return CRT(m,fs);^M
+               ^
+Runtime error in 'CRT': Bad argument types
+Argument types given: SeqEnum[FldFinElt], SeqEnum[RngUPolElt[FldFin]]
+
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.4079035921461780015923706436
+
+BGVEncode(
+    m: [ 52144, 31192, 47190, 46989, 64699, 27138, 5337, 63620, 569...,
+    fs: [ z + 2469, z + 4938, z + 5707, z + 9589, z + 9876, z + 1016...
+)
+In file "basicBGV.m", line 275, column 13:
+>>   return CRT(m,fs);^M
+               ^
+Runtime error in 'CRT': Bad argument types
+Argument types given: SeqEnum[FldFinElt], SeqEnum[RngUPolElt[FldFin]]
+
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.1569715342397420574354755662
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.1769102796680597061652864340
+
+In file "basicBGV.m", line 281, column 3:
+>>   for i := 1 to #fs do^M
+     ^
+User error: bad syntax
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 21.7505058201741499417699620959
+Test additive homomorphism  false
+Test multiplicative homomorphism  false
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.7384576317757646362802969715
+Test additive homomorphism  true
+Test multiplicative homomorphism  true
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.6490008718490143120324970954
+Test additive homomorphism  true
+Test multiplicative homomorphism  true
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 21.9729577064052487364706420548
+Test additive homomorphism  true
+Test multiplicative homomorphism  true
+> load "basicBGV.m";
+Loading "basicBGV.m"
+Test encrypt / decrypt  true
+Noise in fresh ct 22.0378348009656708846997431701
+Test additive homomorphism  true
+Test multiplicative homomorphism  true
+> 
