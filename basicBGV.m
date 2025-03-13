@@ -297,27 +297,19 @@ end function;
 // print "Test additive homomorphism ", asumb eq [A[i] + B[i] : i in [1..N]];
 // print "Test multiplicative homomorphism ", aprodb eq [A[i]*B[i] : i in [1..N]];
 
-
-
-// generating ksk and testing mult
-// ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
-// c3 := BGVMul(c1, c1, ksk);
-// m3 := BGVDecrypt(c3, sk);
-// print "Test multiplication with key switch", m3 eq ((m1*m1) mod f) mod p;
-// print "Noise in mult with key switch", BGVNoiseBound(c3,sk);
-
-// ck := c1;
-// mt := m1;
-// for k := 2 to 16 do
-//   ck := BGVMul(ck, c1, ksk);
-//   mk := BGVDecrypt(ck, sk);
-//   mt := ((mt*m1) mod f) mod p;
-//   print k;
-//   print "Test multiplication with key switch ", mk eq mt;
-//   print "Noise in mult with key switch", BGVNoiseBound(ck,sk);
-// end for;
-
 // Task 4
 
+// Task 5
 
+function BGVTrivialKeyRecovery(sk)
+  temp := BGVDecrypt(<[0,1],max_level>,sk);
+  for i := 0 to N-1 do
+    if Coefficient(temp,i) eq p-1 then // Coefficient function got to know of it from Chatgpt
+     temp := temp+(-1-p+1)*x^i;
+    end if;
+  end for;
+  return temp;
+end function;
 
+// skrec := BGVTrivialKeyRecovery(sk);
+// print "Trivial key recovery works ", skrec eq sk;
