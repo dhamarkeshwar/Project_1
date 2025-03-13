@@ -302,8 +302,8 @@ end function;
 // Task 5
 
 function BGVTrivialKeyRecovery(sk)
-  temp := BGVDecrypt(<[0,1],max_level>,sk);
-  for i := 0 to N-1 do
+  temp := BGVDecrypt(<[0,1],max_level>,sk); //gets secret key in mod p
+  for i := 0 to N-1 do // -1 is mapped to p-1, so replacing p-1 coefficients with -1
     if Coefficient(temp,i) eq p-1 then // Coefficient function got to know of it from Chatgpt
      temp := temp+(-1-p+1)*x^i;
     end if;
