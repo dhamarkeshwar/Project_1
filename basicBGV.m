@@ -299,6 +299,8 @@ end function;
 
 // Task 4
 
+
+
 // Task 5
 
 function BGVTrivialKeyRecovery(sk)
@@ -313,3 +315,157 @@ end function;
 
 // skrec := BGVTrivialKeyRecovery(sk);
 // print "Trivial key recovery works ", skrec eq sk;
+
+
+// ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
+// ck := c1;
+// mt := m1;
+// for k := 2 to 16 do
+//   ck := BGVMul(ck, c1, ksk);
+//   mk := BGVDecrypt(ck, sk);
+//   mt := ((mt*m1) mod f) mod p;
+//   print k;
+//   print "Test modified multiplication ", mk eq mt;
+//   print "Min elt", Minimum(Coefficients(BGVPartialDecrypt(ck, sk))) le 0;
+//print "Min elt f", Minimum(Coefficients(-x^2+5))[1];
+f := -x^2 + 5;
+min_coeff, _ := Minimum(Coefficients(f)); // Extract only the coefficient value
+print "Min elt f", min_coeff;
+
+//   print "Noise in basic mult", BGVNoiseBound(ck,sk);
+// end for;
+
+// function BGVBorder_singlecoeff(c,sk)// this is only for cipher with two coefficients
+//   temp := 0;
+//   cipher_1 := c[1][1];
+//   cipher_2 := c[1][2];
+//   intermediate_cipher := <[cipher_1,cipher_2],c[2]>;
+//   ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
+//   min_coeff, _ := Minimum(Coefficients(BGVPartialDecrypt(intermediate_cipher, sk)));
+//   print "is initial min_coeff less than zero", min_coeff lt 0;
+//   print "min_coeff is", min_coeff;
+//   while min_coeff ge 0 do
+//     intermediate_cipher := BGVMul(intermediate_cipher,intermediate_cipher,ksk);
+//     min_coeff, _ := Minimum(Coefficients(BGVPartialDecrypt(intermediate_cipher, sk)));
+//     temp := temp + 1; //for number of partial decryption calls
+//   end while;
+//   return <intermediate_cipher,temp>;
+// end function;
+
+// // // print "c1", c1[1][1];
+// // // print "constant coeff", Coefficient(c1[1][1],0);
+// // // temp := x+1;
+// // // print "add", temp+1;
+// print "BGVBorder_singlecoeff debug", BGVBorder_singlecoeff(c1,sk);
+// print "is c1 equal to the derived cipher, then not successful", c1 eq BGVBorder_singlecoeff(c1,sk)[1];
+// print "c1 level equal to max level?", c1[2] eq max_level;
+// temp, _ := Minimum(Coefficients(BGVPartialDecrypt(c1,sk)));
+// print "min_coeff and position of min_coeff in c1", Minimum(Coefficients(BGVPartialDecrypt(c1,sk)));
+// print "temp", dq+temp;
+
+
+// print "basic check", Minimum(Coefficients(-2*x+1));
+// print "prime p = ", p;
+// print "minumum of coeffs", Minimum(Coefficients(c1[1][1]));
+// print "maximum of coeffs", Maximum(Coefficients(c1[1][1]));
+// print "is min greater than max", Minimum(Coefficients(c1[1][1])) gt Maximum(Coefficients(c1[1][1]));
+//print "seq", Min(Eltseq(c1[1][1]));
+
+//function BGVActiveAttack(pk,sk)
+
+
+// Task 6
+
+function RecNTT(a, w, N)
+  if N eq 1 then 
+    return [a[1]];
+  else;
+    even_part := [a[i] : i in [1..#a] | (i mod 2) eq 1];
+    odd_part := [a[i] : i in [1..#a] | (i mod 2) eq 0];
+
+    y_even := RecNTT(even_part, w^2 mod dq, (N div 2));
+    y_odd := RecNTT(odd_part, w^2 mod dq, (N div 2));
+    eval_tuple := [0 : i in [1..N]];// for sidechannel I think
+
+    for k := 0 to (N div 2)-1 do
+      odd_part_sum := w^k * y_odd[k+1];
+      eval_tuple[k+1] := (y_even[k+1] + odd_part_sum) mod dq;
+      eval_tuple[k + (N div 2)+1] := (y_even[k+1] - odd_part_sum) mod dq;
+    end for;
+
+    return eval_tuple;
+  end if;
+end function;
+
+function RecINTT(a, w, N)
+  N_inverse := InverseMod(N, dq);
+  w_inverse := InverseMod(w, dq);
+  pre_output := RecNTT(a, w_inverse, N);
+  return [(N_inverse*i) mod dq : i in pre_output];
+end function;
+
+function SquareMultiply(a, n, q) //q is the size of modulus were trying to work with
+  bit := Intseq(n,2);
+  k := #bit;
+  b := [0 : i in [1..k]];
+  b[k] := a;
+  
+  for i := k-1 to 1 by -1 do
+    if bit[i] eq 1 then
+      b[i] := (b[i+1]^2 * a) mod q;
+    else;
+      b[i] := (b[i+1]^2) mod q;
+    end if;
+  end for;
+
+  return b[1];
+end function;
+
+function PrimitiveNthRoot(ell, N)
+  return SquareMultiply(PrimitiveRoot(qb^ell), EulerPhi(qb^ell) div N, qb^ell);
+end function;
+
+function FastMult(a, b, w, N)
+  coef_a := Coefficients(a);
+  coef_b := Coefficients(b);
+  for i := 1 to N-#coef_a do
+    Append(~coef_a, 0);
+  end for;
+  for i := 1 to N-#coef_b do
+    Append(~coef_b, 0);
+  end for;
+  NTT_a := RecNTT(coef_a, w, N);
+  NTT_b := RecNTT(coef_b, w, N);
+  NTT_c := [(NTT_a[i]*NTT_b[i]) mod dq : i in [1..N]];
+  coef_c := RecINTT(NTT_c, w, N);
+  c := &+[coef_c[i] * x^(i-1) : i in [1..#coef_c]];
+  return c;
+end function;
+
+function SchoolBookMult(a,b);
+  coef_a := Coefficients(a);
+  coef_b := Coefficients(b);
+  deg_a := #coef_a - 1;
+  deg_b := #coef_b - 1;
+  deg_c := deg_a + deg_b;
+  coef_c := [0 : i in [1..deg_c+1]];
+  for j := 0 to deg_a do
+    for k := 0 to deg_b do
+        coef_c[j + k + 1] +:= coef_a[j + 1] * coef_b[k + 1];
+    end for;
+  end for;
+  c := &+[coef_c[i] * x^(i-1) : i in [1..#coef_c]];
+  return c;
+end function;
+
+
+M := 2^5;
+
+a := Zx![Z | Random(M-1) : i in [1..M]];
+b := Coefficients(a);
+w := SquareMultiply(PrimitiveRoot(dq), EulerPhi(dq) div M, dq);
+
+print "Is NTT successful? ", b eq RecINTT(RecNTT(b, w, M), w, M);
+print "school_book working? ", SchoolBookMult(x+1,x^2+2);
+
+print "falt mul ", FastMult(x+1, x^2+2, w, M);
