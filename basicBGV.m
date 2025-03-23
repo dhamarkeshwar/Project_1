@@ -299,7 +299,40 @@ end function;
 
 // Task 4
 
+function BGVLatticeAttack(pk, ell)
+  vec_pk_1 := Coefficients(pk[1]);
+  vec_pk_2 := Coefficients(pk[2]);
+  M := DiagonalMatrix(Z, N+1, [1 : i in [1..N+1]]);
+  zero_column := ZeroMatrix(Z, N+1, 1);
+  M_1 := HorizontalJoin(M, zero_column);
+  A_n_1 := [vec_pk_2[i] : i in [2..N]];
+  // A_n_1 := ZeroMatrix(Z, 1, N-1);
+  Rev_A_n_1 := Reverse(Eltseq(A_n_1));
+  Rev_A_n_1 := [Rev_A_n_1[i]*qb^ell : i in [1..#Rev_A_n_1]];
+  A := Vector([-vec_pk_2[1]*qb^ell] cat Eltseq(Rev_A_n_1) cat [p*qb^ell, -vec_pk_1[1]*qb^ell]);
+  // print "is size of A N+1", #A;
+  Modified_M := VerticalJoin(M_1, A);
+  L := Lattice(Transpose(Modified_M));
+  L_red := LLL(L);
+  short_vec := BKZ(L_red,20);
+  short_vec_1 := Basis(short_vec)[1];
+  short_vec_2 := Vector(Eltseq(short_vec_1));
+  //print "s||e", short_vec;
+  //short_vec := ShortestVectors(Lattice(Modified_M));
+  // sh := Eltseq(short_vec[1]);
+  // g := [sh[i]mod qb^ell :i in [1..#sh]];
+  // s := [short_vec[i] : i in [1..N]];
+  poly_sec := &+[Zx!short_vec_2[i]*x^(i-1) : i in [1..N]];
+  //print "Type:", Type(short_vec);
+  return poly_sec;
+  //return Eltseq(short_vec[1]);
+end function;
 
+// for k :=1 to 8 do
+//   skrec := BGVLatticeAttack(pk, k);
+//   print "Lattice attack for qb^k with k =", k, skrec eq sk;
+//   //print "sk", sk;
+// end for;
 
 // Task 5
 
@@ -335,28 +368,26 @@ print "Min elt f", min_coeff;
 //   print "Noise in basic mult", BGVNoiseBound(ck,sk);
 // end for;
 
-// function BGVBorder_singlecoeff(c,sk)// this is only for cipher with two coefficients
-//   temp := 0;
-//   cipher_1 := c[1][1];
-//   cipher_2 := c[1][2];
-//   intermediate_cipher := <[cipher_1,cipher_2],c[2]>;
-//   ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
-//   min_coeff, _ := Minimum(Coefficients(BGVPartialDecrypt(intermediate_cipher, sk)));
-//   print "is initial min_coeff less than zero", min_coeff lt 0;
-//   print "min_coeff is", min_coeff;
-//   while min_coeff ge 0 do
-//     intermediate_cipher := BGVMul(intermediate_cipher,intermediate_cipher,ksk);
-//     min_coeff, _ := Minimum(Coefficients(BGVPartialDecrypt(intermediate_cipher, sk)));
-//     temp := temp + 1; //for number of partial decryption calls
-//   end while;
-//   return <intermediate_cipher,temp>;
-// end function;
+function BGVBorder_singlecoeff(pk, sk)// this is only for cipher with two coefficients
+  temp := 0;
+  cipher_1 := pk[1];
+  cipher_2 := pk[2];
+  intermediate_cipher := <[cipher_1,cipher_2], max_level>;
+  print "is public key encryption of 0", BGVDecrypt(intermediate_cipher, sk) eq 0;
+  ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
+  while BGVDecrypt(intermediate_cipher, sk) eq 0 do
+    intermediate_cipher := BGVMul(intermediate_cipher,intermediate_cipher,ksk);
+    temp := temp + 1; //for number of partial decryption calls
+  end while;
+  print "does cipher decrypts to 0", BGVDecrypt(intermediate_cipher, sk) eq 0;
+  return <intermediate_cipher,temp>;
+end function;
 
 // // // print "c1", c1[1][1];
 // // // print "constant coeff", Coefficient(c1[1][1],0);
 // // // temp := x+1;
 // // // print "add", temp+1;
-// print "BGVBorder_singlecoeff debug", BGVBorder_singlecoeff(c1,sk);
+print "BGVBorder_singlecoeff debug", BGVBorder_singlecoeff(pk, sk);
 // print "is c1 equal to the derived cipher, then not successful", c1 eq BGVBorder_singlecoeff(c1,sk)[1];
 // print "c1 level equal to max level?", c1[2] eq max_level;
 // temp, _ := Minimum(Coefficients(BGVPartialDecrypt(c1,sk)));
@@ -469,3 +500,19 @@ print "Is NTT successful? ", b eq RecINTT(RecNTT(b, w, M), w, M);
 print "school_book working? ", SchoolBookMult(x+1,x^2+2);
 
 print "falt mul ", FastMult(x+1, x^2+2, w, M);
+
+// A := [1,2,2];
+// B := Vector([3] cat Eltseq(A));
+// print "diagonal matrix", B;
+
+ M := DiagonalMatrix(Z, 5, [3 : i in [1..5]]);
+zero_column := ZeroMatrix(Z, 5, 1);
+M_1 := HorizontalJoin(M, zero_column);
+A_n_1 := [2, 3, 4];
+  // A_n_1 := ZeroMatrix(Z, 1, N-1);
+Rev_A_n_1 := Reverse(Eltseq(A_n_1));
+A := Vector([-1] cat Eltseq(Rev_A_n_1) cat [5, 6]);
+Modified_M := VerticalJoin(M_1, A);
+print "rev", Modified_M;
+print "Transpose", Transpose(Modified_M);
+print "A", A;
