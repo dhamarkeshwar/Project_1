@@ -292,21 +292,6 @@ function BGVLatticeAttack(pk, ell)
   end if;
 end function;
 
-M := DiagonalMatrix(Z, 3, [1 : i in [1..3]]);
-zero_column := ZeroMatrix(Z, 3, 1);
-M_1 := HorizontalJoin(M, zero_column);
-A_n_1 := [i : i in [2..3]];
-Rev_A_n_1 := Reverse(Eltseq(A_n_1));
-A := Vector([-1] cat Eltseq(Rev_A_n_1) cat [4]);
-Modified_M := VerticalJoin(M_1, A);
-print "Modified_M", Transpose(Modified_M);
-L := Lattice(Transpose(Modified_M));
-short_vec := BKZ(L,20);
-short_vec_1 := Basis(short_vec)[1];
-short_vec_2 := Vector(Eltseq(short_vec_1));
-poly_sec := &+[Zx!short_vec_2[i]*x^(i-1) : i in [1..3]];
-print "poly sec", poly_sec;
-
 // Task 5
 
 function BGVTrivialKeyRecovery(sk)
