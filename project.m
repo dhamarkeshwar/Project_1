@@ -273,9 +273,9 @@ function BGVLatticeAttack(pk, ell)
   M := DiagonalMatrix(Z, N+2, [1 : i in [1..N+2]]);
   zero_column := ZeroMatrix(Z, N+2, 1);
   M_1 := HorizontalJoin(M, zero_column);
-  A_n_1 := [N*vec_pk_2[i] : i in [2..N]];
+  A_n_1 := [vec_pk_2[i] : i in [2..N]];
   Rev_A_n_1 := Reverse(Eltseq(A_n_1));
-  A := Vector([-N*vec_pk_2[1]] cat Eltseq(Rev_A_n_1) cat [p*N, -N*vec_pk_1[1], N*qb^ell]);
+  A := Vector([-vec_pk_2[1]] cat Eltseq(Rev_A_n_1) cat [p, -vec_pk_1[1], qb^ell]);
   Modified_M := VerticalJoin(M_1, A);
   L := Lattice(Transpose(Modified_M));
   short_vec := BKZ(L,20);
@@ -441,14 +441,14 @@ function FastMult(a, b, w, N)
   coef_a := Coefficients(a);
   coef_b := Coefficients(b);
   if #coef_a lt N then
-    coef_a := Eltseq(coef_a) cat [0 : i in [1..N-#coef_a]];
+   coef_a := Eltseq(coef_a) cat [0 : i in [1..N-#coef_a]];
   end if;
   if #coef_b lt N then 
-    coef_b := Eltseq(coef_b) cat [0 : i in [1..N-#coef_b]];
+   coef_b := Eltseq(coef_b) cat [0 : i in [1..N-#coef_b]];
   end if;
   NTT_a := RecNTT(coef_a, w, N);
   NTT_b := RecNTT(coef_b, w, N);
-  NTT_c := [NTT_a[i]*NTT_b[i] : i in [1..N]];
+  NTT_c := [NTT_a[i]*NTT_b[i] : i in [1..N]]; //overhead here
   coef_c := RecINTT(NTT_c, w, N);
   // c := Polynomial(Zqx, coef_c);
   c := &+[Zqx | coef_c[i]*x^(i-1) : i in [1..#coef_c]];
@@ -476,7 +476,7 @@ end function;
 test_task1 := true;
 test_task2 := true;
 test_task3 := true;
-test_task4 := true;
+test_task4 := false;
 test_task5 := true;
 test_task6 := true;
 
