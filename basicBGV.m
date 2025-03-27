@@ -231,11 +231,11 @@ function BGVBasicMul(c_1,c_2)
   return cc;
 end function;
 
-// // test basic mult 
-// c3 := BGVBasicMul(c1, c1);
-// m3 := BGVDecrypt(c3, sk);
-// print "Test basic multiplication ", m3 eq ((m1*m1) mod f) mod p;
-// print "Noise in basic mult", BGVNoiseBound(c3,sk);
+// test basic mult 
+c3 := BGVBasicMul(c1, c1);
+m3 := BGVDecrypt(c3, sk);
+print "Test basic multiplication ", m3 eq ((m1*m1) mod f) mod p;
+print "Noise in basic mult", BGVNoiseBound(c3,sk);
 
 function BGVKeySwitch(g,ell,ksk) // outputs a list of ciphers of q_b*s^2 multiplied by pieces of g
   cs := [];
@@ -305,33 +305,21 @@ function BGVLatticeAttack(pk, ell)
   M := DiagonalMatrix(Z, N+1, [1 : i in [1..N+1]]);
   zero_column := ZeroMatrix(Z, N+1, 1);
   M_1 := HorizontalJoin(M, zero_column);
-  A_n_1 := [vec_pk_2[i] : i in [2..N]];
-  // A_n_1 := ZeroMatrix(Z, 1, N-1);
+  A_n_1 := [(vec_pk_2[i] mod qb^ell) * dq : i in [2..N]];
   Rev_A_n_1 := Reverse(Eltseq(A_n_1));
-  Rev_A_n_1 := [Rev_A_n_1[i]*qb^ell : i in [1..#Rev_A_n_1]];
-  A := Vector([-vec_pk_2[1]*qb^ell] cat Eltseq(Rev_A_n_1) cat [p*qb^ell, -vec_pk_1[1]*qb^ell]);
-  // print "is size of A N+1", #A;
+  Rev_A_n_1 := [Rev_A_n_1[i] : i in [1..#Rev_A_n_1]];
+  A := Vector([(vec_pk_2[1] mod qb^ell)*dq*-1] cat Eltseq(Rev_A_n_1) cat [(p mod qb^ell)*dq, (vec_pk_1[1] mod qb^ell)*dq*-1]);
   Modified_M := VerticalJoin(M_1, A);
   L := Lattice(Transpose(Modified_M));
-  L_red := LLL(L);
-  short_vec := BKZ(L_red,20);
+  short_vec := BKZ(L,20);
   short_vec_1 := Basis(short_vec)[1];
   short_vec_2 := Vector(Eltseq(short_vec_1));
-  //print "s||e", short_vec;
-  //short_vec := ShortestVectors(Lattice(Modified_M));
-  // sh := Eltseq(short_vec[1]);
-  // g := [sh[i]mod qb^ell :i in [1..#sh]];
-  // s := [short_vec[i] : i in [1..N]];
   poly_sec := &+[Zx!short_vec_2[i]*x^(i-1) : i in [1..N]];
-  //print "Type:", Type(short_vec);
   return poly_sec;
-  //return Eltseq(short_vec[1]);
 end function;
-
-// for k :=1 to 8 do
-//   skrec := BGVLatticeAttack(pk, k);
-//   print "Lattice attack for qb^k with k =", k, skrec eq sk;
-//   //print "sk", sk;
+// for k := 1 to 8 do 
+//    skrec := BGVLatticeAttack(pk, k);
+//    print "Lattice attack for qb^k with k =", k, skrec eq sk;
 // end for;
 
 // Task 5
@@ -346,66 +334,94 @@ function BGVTrivialKeyRecovery(sk)
   return temp;
 end function;
 
-// skrec := BGVTrivialKeyRecovery(sk);
-// print "Trivial key recovery works ", skrec eq sk;
-
-
-// ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
-// ck := c1;
-// mt := m1;
-// for k := 2 to 16 do
-//   ck := BGVMul(ck, c1, ksk);
-//   mk := BGVDecrypt(ck, sk);
-//   mt := ((mt*m1) mod f) mod p;
-//   print k;
-//   print "Test modified multiplication ", mk eq mt;
-//   print "Min elt", Minimum(Coefficients(BGVPartialDecrypt(ck, sk))) le 0;
-//print "Min elt f", Minimum(Coefficients(-x^2+5))[1];
 f := -x^2 + 5;
 min_coeff, _ := Minimum(Coefficients(f)); // Extract only the coefficient value
 print "Min elt f", min_coeff;
 
-//   print "Noise in basic mult", BGVNoiseBound(ck,sk);
-// end for;
 
-function BGVBorder_singlecoeff(pk, sk)// this is only for cipher with two coefficients
-  temp := 0;
-  cipher_1 := pk[1];
-  cipher_2 := pk[2];
-  intermediate_cipher := <[cipher_1,cipher_2], max_level>;
-  print "is public key encryption of 0", BGVDecrypt(intermediate_cipher, sk) eq 0;
-  ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
-  while BGVDecrypt(intermediate_cipher, sk) eq 0 do
-    intermediate_cipher := BGVMul(intermediate_cipher,intermediate_cipher,ksk);
-    temp := temp + 1; //for number of partial decryption calls
-  end while;
-  print "does cipher decrypts to 0", BGVDecrypt(intermediate_cipher, sk) eq 0;
-  return <intermediate_cipher,temp>;
+function BGVActiveAttack(pk, sk)
+  pk_1 := <pk, max_level>;
+  pos_temp_coeff := [];
+  neg_temp_coeff := [];
+  decrypt_calls := 0;
+  for i := 1 to N do
+    pk_1[1][1] := pk_1[1][1] + Floor(dq/2)*x^(i-1);
+    success := 0;
+    temp := p*x^(i-1);
+    err := 1;
+    decrypt_calls := decrypt_calls + 1;
+    if BGVDecrypt(pk_1, sk) eq 0 then Append(~pos_temp_coeff, 0);
+    else
+      while (success eq 0) and (BGVDecrypt(pk_1, sk) ne 0) do
+        if BGVDecrypt(<[pk_1[1][1] - temp, pk_1[1][2]], max_level>, sk) eq 0 then
+          pk_1[1][1] := pk_1[1][1] - temp;
+          Append(~pos_temp_coeff, -err);
+          success := 1;
+        elif BGVDecrypt(<[pk_1[1][1] + temp, pk_1[1][2]], max_level>, sk) eq 0 then
+          pk_1[1][1] := pk_1[1][1] + temp;
+          Append(~pos_temp_coeff, err);
+          success := 1;
+        end if;
+        decrypt_calls := decrypt_calls + 3;
+        temp := temp + p*x^(i-1);
+        err := err + 1;
+      end while;
+    end if;
+  end for;
+  pos_poly_err := &+[Zx!pos_temp_coeff[i]*x^(i-1) : i in [1..N]];
+  pk_2 := <pk, max_level>;
+  for i := 1 to N do
+    pk_2[1][1] := pk_2[1][1] - Floor(dq/2)*x^(i-1);
+    success := 0;
+    temp := p*x^(i-1);
+    err := 1;
+    if BGVDecrypt(pk_2, sk) eq 0 then Append(~neg_temp_coeff, 0);
+    else
+      while (success eq 0) and (BGVDecrypt(pk_2, sk) ne 0) do
+        if BGVDecrypt(<[pk_2[1][1] - temp, pk_2[1][2]], max_level>, sk) eq 0 then
+          pk_2[1][1] := pk_2[1][1] - temp;
+          Append(~neg_temp_coeff, -err);
+          success := 1;
+        elif BGVDecrypt(<[pk_2[1][1] + temp, pk_2[1][2]], max_level>, sk) eq 0 then
+          pk_2[1][1] := pk_2[1][1] + temp;
+          Append(~neg_temp_coeff, err);
+          success := 1;
+        end if;
+        decrypt_calls := decrypt_calls + 3;
+        temp := temp + p*x^(i-1);
+        err := err + 1;
+      end while;
+    end if;
+    decrypt_calls := decrypt_calls + 1;
+  end for;
+  neg_poly_err := &+[Zx!neg_temp_coeff[i]*x^(i-1) : i in [1..N]];
+  dq_negator := Zx![Z | Floor(dq/2) : i in [1..N]];
+  // -(pos_poly_err + neg_poly_err) = e
+  e := -(pos_poly_err + neg_poly_err);// error polynomial
+  as := (pk[1]-p*e) mod dq;
+  // print "error poly", e;
+  coeffs_as := Coefficients(as);
+  coeffs_a := Coefficients(-pk[2]);
+  circulantMatrix := Matrix(Integers(dq), N, N, [[coeffs_a[(i-j) mod N + 1] * (1 - 2*((i-j lt 0) select 1 else 0)) : j in [1..N]] : i in [1..N]]);
+  vec_coeffs_as := Vector(Integers(dq), coeffs_as);
+  vec_s := Solution(Transpose(circulantMatrix), vec_coeffs_as);
+  cor_vec_s := [Z | vec_s[i] eq (dq-1) select -1 else vec_s[i] : i in [1..N]];
+  poly_sec := &+[Zx!cor_vec_s[i]*x^(i-1) : i in [1..N]];
+  if BGVDecrypt(<pk,max_level>, poly_sec) eq 0 then
+    return poly_sec, decrypt_calls;
+  else
+    return "wrong";
+  end if;
 end function;
 
-// // // print "c1", c1[1][1];
-// // // print "constant coeff", Coefficient(c1[1][1],0);
-// // // temp := x+1;
-// // // print "add", temp+1;
-print "BGVBorder_singlecoeff debug", BGVBorder_singlecoeff(pk, sk);
-// print "is c1 equal to the derived cipher, then not successful", c1 eq BGVBorder_singlecoeff(c1,sk)[1];
-// print "c1 level equal to max level?", c1[2] eq max_level;
-// temp, _ := Minimum(Coefficients(BGVPartialDecrypt(c1,sk)));
-// print "min_coeff and position of min_coeff in c1", Minimum(Coefficients(BGVPartialDecrypt(c1,sk)));
-// print "temp", dq+temp;
-
-
-// print "basic check", Minimum(Coefficients(-2*x+1));
-// print "prime p = ", p;
-// print "minumum of coeffs", Minimum(Coefficients(c1[1][1]));
-// print "maximum of coeffs", Maximum(Coefficients(c1[1][1]));
-// print "is min greater than max", Minimum(Coefficients(c1[1][1])) gt Maximum(Coefficients(c1[1][1]));
-//print "seq", Min(Eltseq(c1[1][1]));
-
-//function BGVActiveAttack(pk,sk)
 
 
 // Task 6
+
+// qb := GetBaseModulus();
+// ell := 8;
+// Zq := Integers(qb^ell);
+// Zqx<x> := PolynomialRing(Zq);
 
 function RecNTT(a, w, N)
   if N eq 1 then 
@@ -414,14 +430,14 @@ function RecNTT(a, w, N)
     even_part := [a[i] : i in [1..#a] | (i mod 2) eq 1];
     odd_part := [a[i] : i in [1..#a] | (i mod 2) eq 0];
 
-    y_even := RecNTT(even_part, w^2 mod dq, (N div 2));
-    y_odd := RecNTT(odd_part, w^2 mod dq, (N div 2));
+    y_even := RecNTT(even_part, Zq!w^2, (N div 2));
+    y_odd := RecNTT(odd_part, Zq!w^2, (N div 2));
     eval_tuple := [0 : i in [1..N]];// for sidechannel I think
 
     for k := 0 to (N div 2)-1 do
       odd_part_sum := w^k * y_odd[k+1];
-      eval_tuple[k+1] := (y_even[k+1] + odd_part_sum) mod dq;
-      eval_tuple[k + (N div 2)+1] := (y_even[k+1] - odd_part_sum) mod dq;
+      eval_tuple[k+1] := y_even[k+1] + odd_part_sum;
+      eval_tuple[k + (N div 2)+1] := y_even[k+1] - odd_part_sum;
     end for;
 
     return eval_tuple;
@@ -429,10 +445,10 @@ function RecNTT(a, w, N)
 end function;
 
 function RecINTT(a, w, N)
-  N_inverse := InverseMod(N, dq);
-  w_inverse := InverseMod(w, dq);
+  N_inverse := InverseMod(N, qb^ell);
+  w_inverse := InverseMod(w, qb^ell);
   pre_output := RecNTT(a, w_inverse, N);
-  return [(N_inverse*i) mod dq : i in pre_output];
+  return [N_inverse*i : i in pre_output];
 end function;
 
 function SquareMultiply(a, n, q) //q is the size of modulus were trying to work with
@@ -459,15 +475,17 @@ end function;
 function FastMult(a, b, w, N)
   coef_a := Coefficients(a);
   coef_b := Coefficients(b);
-  for i := 1 to N-#coef_a do
-    Append(~coef_a, 0);
-  end for;
-  for i := 1 to N-#coef_b do
-    Append(~coef_b, 0);
-  end for;
+  if #coef_a lt N then
+    for i := 1 to N-#coef_a do
+      Append(~coef_a, 0);
+    end for;
+    for i := 1 to N-#coef_b do
+      Append(~coef_b, 0);
+    end for;
+  end if;
   NTT_a := RecNTT(coef_a, w, N);
   NTT_b := RecNTT(coef_b, w, N);
-  NTT_c := [(NTT_a[i]*NTT_b[i]) mod dq : i in [1..N]];
+  NTT_c := [NTT_a[i]*NTT_b[i] : i in [1..N]];
   coef_c := RecINTT(NTT_c, w, N);
   c := &+[coef_c[i] * x^(i-1) : i in [1..#coef_c]];
   return c;
@@ -489,30 +507,184 @@ function SchoolBookMult(a,b);
   return c;
 end function;
 
+// test encrypt / decrypt
 
-M := 2^5;
+test_task1 := true;
+test_task2 := true;
+test_task3 := true;
+test_task4 := true;
+test_task5 := true;
+test_task6 := true;
 
-a := Zx![Z | Random(M-1) : i in [1..M]];
-b := Coefficients(a);
-w := SquareMultiply(PrimitiveRoot(dq), EulerPhi(dq) div M, dq);
+sk, pk := BGVKeyGen();
+m := RandomMessagePol();
+c := BGVEncrypt(m,pk);
+mdec := BGVDecrypt(c,sk);
+print "Test encrypt / decrypt ", m eq mdec;
+print "Noise in fresh ct", BGVNoiseBound(c,sk);
 
-print "Is NTT successful? ", b eq RecINTT(RecNTT(b, w, M), w, M);
-print "school_book working? ", SchoolBookMult(x+1,x^2+2);
+// test mod switch
+c1 := BGVModSwitch(c, 1);
+print "Noise in switched ct", BGVNoiseBound(c1,sk);
+m1 := BGVDecrypt(c1,sk);
+print "Test mod switch ", m eq m1;
 
-print "falt mul ", FastMult(x+1, x^2+2, w, M);
+// test addition 
+m1 := RandomMessagePol();
+c1 := BGVEncrypt(m1,pk);
+m2 := RandomMessagePol();
+c2 := BGVEncrypt(m2,pk);
+c3 := BGVAdd(c1,c2);
+m3 := BGVDecrypt(c3, sk);
+print "Test addition ", m3 eq (m1+m2) mod p;
+print "Noise in addition", BGVNoiseBound(c3,sk);
 
-// A := [1,2,2];
-// B := Vector([3] cat Eltseq(A));
-// print "diagonal matrix", B;
+// test basic mult 
+c3 := BGVBasicMul(c1, c1);
+m3 := BGVDecrypt(c3, sk);
+print "Test basic multiplication ", m3 eq ((m1*m1) mod f) mod p;
+print "Noise in basic mult", BGVNoiseBound(c3,sk);
 
- M := DiagonalMatrix(Z, 5, [3 : i in [1..5]]);
-zero_column := ZeroMatrix(Z, 5, 1);
-M_1 := HorizontalJoin(M, zero_column);
-A_n_1 := [2, 3, 4];
-  // A_n_1 := ZeroMatrix(Z, 1, N-1);
-Rev_A_n_1 := Reverse(Eltseq(A_n_1));
-A := Vector([-1] cat Eltseq(Rev_A_n_1) cat [5, 6]);
-Modified_M := VerticalJoin(M_1, A);
-print "rev", Modified_M;
-print "Transpose", Transpose(Modified_M);
-print "A", A;
+// generating ksk and testing mult
+ksk := BGVKeySwitchingKeyGen(sk^2 mod f, sk);
+c3 := BGVMul(c1, c1, ksk);
+m3 := BGVDecrypt(c3, sk);
+print "Test multiplication with key switch", m3 eq ((m1*m1) mod f) mod p;
+print "Noise in mult with key switch", BGVNoiseBound(c3,sk);
+
+if test_task1 then 
+
+print "\n\n\n\n";
+
+// tests for Task 1
+ck := c1;
+mt := m1;
+for k := 2 to 16 do
+  ck := BGVBasicMul(ck, c1);
+  mk := BGVDecrypt(ck, sk);
+  mt := ((mt*m1) mod f) mod p;
+  print k;
+  print "Test basic multiplication ", mk eq mt;
+  print "Noise in basic mult", BGVNoiseBound(ck,sk);
+end for;
+
+print "\n\n";
+
+ck := c1;
+mt := m1;
+for k := 2 to 16 do
+  ck := BGVMul(ck, c1, ksk);
+  mk := BGVDecrypt(ck, sk);
+  mt := ((mt*m1) mod f) mod p;
+  print k;
+  print "Test multiplication with key switch ", mk eq mt;
+  print "Noise in mult with key switch", BGVNoiseBound(ck,sk);
+end for;
+
+print "\n\n";
+
+ck := c1;
+mt := m1;
+for k := 2 to max_level-2 do
+  ck := BGVMul(ck, c1, ksk);
+  ck := BGVModSwitch(ck,1);
+  mk := BGVDecrypt(ck, sk);
+  mt := ((mt*m1) mod f) mod p;
+  print k;
+  print "Test multiplication with mod switch ", mk eq mt;
+  print "Noise in mult and mod switch ", BGVNoiseBound(ck,sk);
+end for;
+
+print "\n\n";
+
+// test with repeated squaring
+ck := c1;
+mt := m1;
+for k := 1 to max_level-2 do
+  ck := BGVMul(ck, ck, ksk);
+  ck := BGVModSwitch(ck,1);
+  mk := BGVDecrypt(ck, sk);
+  print k;
+  mt := (mt*mt mod f) mod p;
+  print "Test rep squaring mod switch multiplication ", mk eq mt;
+  print "Noise in rep squaring mod switch mult", BGVNoiseBound(ck,sk);
+end for;
+
+end if;
+
+if test_task2 then 
+
+print "\n\n";
+
+// test Task 2
+
+A := [Random(Fp) : i in [1..N]];
+B := [Random(Fp) : i in [1..N]];
+a := BGVEncode(A, fs);
+b := BGVEncode(B, fs);
+
+asumb := BGVDecode(a+b, fs);
+aprodb := BGVDecode((a*b) mod Fpz ! f, fs);
+
+print "Test additive homomorphism ", asumb eq [A[i] + B[i] : i in [1..N]];
+print "Test multiplicative homomorphism ", aprodb eq [A[i]*B[i] : i in [1..N]];
+
+end if;
+
+if test_task4 then 
+
+print "\n\n";
+
+// test Task 4
+
+if (toy_set) then 
+for k := 1 to 8 do 
+   skrec := BGVLatticeAttack(pk, k);
+   print "Lattice attack for qb^k with k =", k, skrec eq sk;
+end for;
+else
+   print "Only run lattice attack on toy set";
+end if;
+
+end if;
+
+if test_task5 then 
+
+// test Task 5
+
+print "\n\n";
+
+skrec := BGVTrivialKeyRecovery(sk);
+print "Trivial key recovery works ", skrec eq sk;
+skrec, ncalls := BGVActiveAttack(pk, sk);
+
+print "Active attack works ", sk eq skrec, " using ", ncalls, " calls to decrypt";
+
+end if;
+
+if test_task6 then 
+
+print "\n\n";
+
+qb := GetBaseModulus();
+ell := 8;
+Zq := Integers(qb^ell);
+Zqx<x> := PolynomialRing(Zq);
+
+for k := 2 to 13 do   // mul polys of degree < 2^k
+
+  a := Zqx ! [Random(Zq) : i in [1..2^k]];
+  b := Zqx ! [Random(Zq) : i in [1..2^k]];
+  
+  print "\nMultiplying polys of degree ", 2^k;
+  print "School book "; 
+  time c1 := SchoolBookMult(a,b);
+  print "NTT ";
+  omega := PrimitiveNthRoot(ell, 2^(k+1));
+  time c2 := FastMult(a, b, omega, 2^(k+1));
+  print "Equality ", c1 eq c2;
+  
+end for;
+
+end if;
+
