@@ -282,7 +282,14 @@ function BGVLatticeAttack(pk, ell)
   short_vec_1 := Basis(short_vec)[1];
   short_vec_2 := Vector(Eltseq(short_vec_1));
   poly_sec := &+[Zx!short_vec_2[i]*x^(i-1) : i in [1..N]];
-  return -poly_sec;
+  //print "-poly_sec", -poly_sec;
+  if BGVDecrypt(<pk, ell>, poly_sec) eq 0 then
+    return poly_sec;
+  elif BGVDecrypt(<pk, ell>, -poly_sec) eq 0 then
+    return -poly_sec;
+  else
+    return 0;
+  end if;
 end function;
 
 M := DiagonalMatrix(Z, 3, [1 : i in [1..3]]);
@@ -400,8 +407,8 @@ function RecNTT(a, w, N)
   if N eq 1 then 
     return [a[1]];
   else;
-    even_part := [a[i] : i in [1..#a] | (i mod 2) eq 1];
-    odd_part := [a[i] : i in [1..#a] | (i mod 2) eq 0];
+    even_part := [Zq | a[i] : i in [1..#a] | (i mod 2) eq 1];
+    odd_part := [Zq | a[i] : i in [1..#a] | (i mod 2) eq 0];
 
     y_even := RecNTT(even_part, Zq!w^2, (N div 2));
     y_odd := RecNTT(odd_part, Zq!w^2, (N div 2));
@@ -449,18 +456,17 @@ function FastMult(a, b, w, N)
   coef_a := Coefficients(a);
   coef_b := Coefficients(b);
   if #coef_a lt N then
-    for i := 1 to N-#coef_a do
-      Append(~coef_a, 0);
-    end for;
-    for i := 1 to N-#coef_b do
-      Append(~coef_b, 0);
-    end for;
+    coef_a := Eltseq(coef_a) cat [0 : i in [1..N-#coef_a]];
+  end if;
+  if #coef_b lt N then 
+    coef_b := Eltseq(coef_b) cat [0 : i in [1..N-#coef_b]];
   end if;
   NTT_a := RecNTT(coef_a, w, N);
   NTT_b := RecNTT(coef_b, w, N);
   NTT_c := [NTT_a[i]*NTT_b[i] : i in [1..N]];
   coef_c := RecINTT(NTT_c, w, N);
-  c := &+[coef_c[i] * x^(i-1) : i in [1..#coef_c]];
+  // c := Polynomial(Zqx, coef_c);
+  c := &+[Zqx | coef_c[i]*x^(i-1) : i in [1..#coef_c]];
   return c;
 end function;
 
@@ -611,7 +617,7 @@ print "\n\n";
 // test Task 4
 
 if (toy_set) then 
-print "sk", sk;
+
 for k := 1 to 8 do 
    skrec := BGVLatticeAttack(pk, k);
    print "Lattice attack for qb^k with k =", k, skrec eq sk;
