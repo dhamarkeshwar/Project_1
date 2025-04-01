@@ -1,3 +1,7 @@
+//Dheeraj Kumar Suryakari, r1032106
+// Used chatGPT and Claude ai for understanding crashes and debugging
+//https://github.com/dhamarkeshwar/Project_1
+
 clear;
 
 // system parameters 
@@ -476,9 +480,9 @@ end function;
 test_task1 := true;
 test_task2 := true;
 test_task3 := true;
-test_task4 := false;
-test_task5 := true;
-test_task6 := true;
+test_task4 := true;
+test_task5 := false;
+test_task6 := false;
 
 sk, pk := BGVKeyGen();
 m := RandomMessagePol();
@@ -523,56 +527,86 @@ print "\n\n\n\n";
 // tests for Task 1
 ck := c1;
 mt := m1;
+filename := "/Users/sdheerajkumar/Desktop/magma/Project_1/basicmul.csv";
+noise := BGVNoiseBound(ck, sk);
+file := Open(filename, "w");
+fprintf file, "%o, %o\n", 1, noise;
+
 for k := 2 to 16 do
   ck := BGVBasicMul(ck, c1);
+  noise := BGVNoiseBound(ck, sk);
+  fprintf file, "%o, %o\n", k, noise;
   mk := BGVDecrypt(ck, sk);
   mt := ((mt*m1) mod f) mod p;
   print k;
   print "Test basic multiplication ", mk eq mt;
   print "Noise in basic mult", BGVNoiseBound(ck,sk);
 end for;
+//close(filename);
+//print "dire", GetCurrentDirectory();
 
 print "\n\n";
 
 ck := c1;
 mt := m1;
+filename := "/Users/sdheerajkumar/Desktop/magma/Project_1/mul.csv";
+noise := BGVNoiseBound(ck, sk);
+file := Open(filename, "w");
+fprintf file, "%o, %o\n", 1, noise;
 for k := 2 to 16 do
   ck := BGVMul(ck, c1, ksk);
+  noise := BGVNoiseBound(ck, sk);
+  fprintf file, "%o, %o\n", k, noise;
   mk := BGVDecrypt(ck, sk);
   mt := ((mt*m1) mod f) mod p;
   print k;
   print "Test multiplication with key switch ", mk eq mt;
   print "Noise in mult with key switch", BGVNoiseBound(ck,sk);
 end for;
+//close(filename);
 
 print "\n\n";
 
 ck := c1;
 mt := m1;
-for k := 2 to max_level-2 do
+filename := "/Users/sdheerajkumar/Desktop/magma/Project_1/mul_mod.csv";
+noise := BGVNoiseBound(ck, sk);
+file := Open(filename, "w");
+fprintf file, "%o, %o\n", 1, noise;
+//for k := 2 to max_level-2 do
+for k := 2 to 8 do
   ck := BGVMul(ck, c1, ksk);
   ck := BGVModSwitch(ck,1);
+  noise := BGVNoiseBound(ck, sk);
+  fprintf file, "%o, %o\n", k, noise;
   mk := BGVDecrypt(ck, sk);
   mt := ((mt*m1) mod f) mod p;
   print k;
   print "Test multiplication with mod switch ", mk eq mt;
   print "Noise in mult and mod switch ", BGVNoiseBound(ck,sk);
 end for;
+//close(filename);
 
 print "\n\n";
 
 // test with repeated squaring
 ck := c1;
 mt := m1;
+filename := "/Users/sdheerajkumar/Desktop/magma/Project_1/2^k_mul_mod.csv";
+noise := BGVNoiseBound(ck, sk);
+file := Open(filename, "w");
 for k := 1 to max_level-2 do
   ck := BGVMul(ck, ck, ksk);
   ck := BGVModSwitch(ck,1);
+  noise := BGVNoiseBound(ck, sk);
+  fprintf file, "%o, %o\n", k, noise;
   mk := BGVDecrypt(ck, sk);
   print k;
   mt := (mt*mt mod f) mod p;
   print "Test rep squaring mod switch multiplication ", mk eq mt;
   print "Noise in rep squaring mod switch mult", BGVNoiseBound(ck,sk);
 end for;
+//close(filename);
 
 end if;
 
@@ -606,6 +640,9 @@ if (toy_set) then
 for k := 1 to 8 do 
    skrec := BGVLatticeAttack(pk, k);
    print "Lattice attack for qb^k with k =", k, skrec eq sk;
+  //  check := Sqrt((N+3)/(2*3.14*2))*qb^(k/N+3);
+  //  check_1 := Sqrt(N+25);
+  //  print "check", Log(check) gt check_1;
 end for;
 else
    print "Only run lattice attack on toy set";
